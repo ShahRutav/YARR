@@ -139,6 +139,9 @@ class RLBenchEnv(Env):
         extracted_obs = _extract_obs(obs, self._channels_last, self._observation_config)
         if self._include_lang_goal_in_obs:
             extracted_obs['lang_goal_tokens'] = tokenize([self._lang_goal])[0].numpy()
+            extracted_obs['lang_goal_desc'] = [self._lang_goal]
+            #extracted_obs['video_goal'], = self._task.get_demos(amount=1, live_demos=True)
+            #extracted_obs['image_goal'] = extracted_obs['video_goal'][-1]
         return extracted_obs
 
     def launch(self):
@@ -221,6 +224,9 @@ class MultiTaskRLBenchEnv(MultiTaskEnv):
         extracted_obs = _extract_obs(obs, self._channels_last, self._observation_config)
         if self._include_lang_goal_in_obs:
             extracted_obs['lang_goal_tokens'] = tokenize([self._lang_goal])[0].numpy()
+            extracted_obs['lang_goal_desc'] = [self._lang_goal]
+            #extracted_obs['video_goal'] = self._task.get_demos(amount=1, live_demos=True)
+            #extracted_obs['image_goal'] = extracted_obs['video_goal'][-1]
         return extracted_obs
 
     def launch(self):

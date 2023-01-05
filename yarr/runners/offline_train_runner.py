@@ -136,6 +136,7 @@ class OfflineTrainRunner():
             sample_time = time.time() - t
 
             batch = {k: v.to(self._train_device) for k, v in sampled_batch.items() if type(v) == torch.Tensor}
+            batch.update({k: v for k, v in sampled_batch.items() if type(v) == np.ndarray})
             t = time.time()
             loss = self._step(i, batch)
             step_time = time.time() - t

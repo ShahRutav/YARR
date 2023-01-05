@@ -1,3 +1,4 @@
+from typing import List
 from multiprocessing import Value
 
 import numpy as np
@@ -25,10 +26,13 @@ class RolloutGenerator(object):
             obs = env.reset()
 
         agent.reset()
-        obs_history = {k: [np.array(v, dtype=self._get_type(v))] * timesteps for k, v in obs.items()}
+        obs_history = {k: [np.array(v, dtype=self._get_type(v))] * timesteps for k, v in obs.items() if type(v) == torch.Tensor}
+        obs_history.update({k: [np.array(v, np.float32)] * timesteps for k, v in obs.items() if type(v) == np.ndarray})
+        obs_history.update({k: [np.array(v)] * timesteps for k, v in obs.items() if isinstance(v, list)}) # For the goal description, passed as List
         for step in range(episode_length):
 
-            prepped_data = {k:torch.tensor([v], device=self._env_device) for k, v in obs_history.items()}
+            prepped_data = {k: torch.tensor([v], device=self._env_device) for k, v in obs_history.items() if not k == "lang_goal_desc"} ## VERY BAD. TODO: Change this hard coded behavior
+            prepped_data.update({k: np.array(v) for k, v in obs_history.items() if k == "lang_goal_desc"})
 
             act_result = agent.act(step_signal.value, prepped_data,
                                    deterministic=eval)
@@ -70,7 +74,8 @@ class RolloutGenerator(object):
                 # If the agent gives us observations then we need to call act
                 # one last time (i.e. acting in the terminal state).
                 if len(act_result.observation_elements) > 0:
-                    prepped_data = {k: torch.tensor([v], device=self._env_device) for k, v in obs_history.items()}
+                    prepped_data = {k: torch.tensor([v], device=self._env_device) for k, v in obs_history.items() if not k == "lang_goal_desc"}
+                    prepped_data.update({k: np.array(v) for k, v in obs_history.items() if k == "lang_goal_desc"})
                     act_result = agent.act(step_signal.value, prepped_data,
                                            deterministic=eval)
                     agent_obs_elems_tp1 = {k: np.array(v) for k, v in
